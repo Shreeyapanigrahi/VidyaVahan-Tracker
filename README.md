@@ -92,3 +92,4 @@ project/
 ├── .env.example             # Environment variable template
 └── .gitignore               # Git exclusion rules
 ```
+Testing pull request for CodeRabbit
