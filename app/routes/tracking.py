@@ -24,18 +24,18 @@ def live_track(trip_id):
         
     return render_template('tracking.html', target_vehicle=vehicle, trip=trip)
 
-@tracking.route('/view_map/<int:vehicle_id>')
+@tracking.route('/view_map/<int:trip_id>')
 @login_required
-def view_map(vehicle_id):
-    vehicle = Vehicle.query.get_or_404(vehicle_id)
+def view_map(trip_id):
+    trip = Trip.query.get_or_404(trip_id)
+    vehicle = trip.vehicle
+    
     if vehicle.user_id != current_user.id:
         return render_template('403.html'), 403
 
-    trip = Trip.query.filter_by(vehicle_id=vehicle_id, status='completed') \
-               .order_by(Trip.id.desc()).first()
-    if not trip:
-        return render_template('tracking.html', vehicle=vehicle,
-                               error="No completed trip available.")
+    if trip.status != 'completed':
+        return render_template('tracking.html', target_vehicle=vehicle, trip=trip,
+                               error="This trip is still active or incomplete.")
 
     points = VehicleTracking.query.filter_by(trip_id=trip.id) \
                  .order_by(VehicleTracking.recorded_at).all()

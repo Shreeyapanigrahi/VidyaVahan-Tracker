@@ -44,10 +44,15 @@ class Vehicle(db.Model):
     status = db.Column(db.Enum('available', 'busy'), default='available')
     campus_id = db.Column(db.Integer, db.ForeignKey('campuses.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    battery_level = db.Column(db.Float, default=100.0)
+
     battery = db.relationship('BatteryStatus', backref='vehicle', uselist=False)
     tracking = db.relationship('VehicleTracking', backref='vehicle', lazy=True)
     trips = db.relationship('Trip', backref='vehicle', lazy=True)
+
+    @property
+    def active_trip(self):
+        return next((t for t in self.trips if t.status == 'active'), None)
 
     @validates('battery_capacity_kwh')
     def validate_capacity(self, key, value):
