@@ -25,6 +25,7 @@
                         <th>Start Point</th>
                         <th>End Point</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,6 +58,16 @@
                             <span class="badge bg-success">Completed</span>
                             {% else %}
                             <span class="badge bg-warning text-dark">Active</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if trip.status == 'completed' %}
+                            <a href="{{ url_for('tracking.view_map', trip_id=trip.id) }}"
+                                class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-map-marked-alt me-1"></i> View Map
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">N/A</span>
                             {% endif %}
                         </td>
                     </tr>
