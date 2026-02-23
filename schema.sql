@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
     battery_capacity_kwh DECIMAL(5, 2) DEFAULT 75.0 CHECK (battery_capacity_kwh > 0),
     status ENUM('available', 'busy') DEFAULT 'available',
     campus_id INT NULL,
+    battery_level FLOAT DEFAULT 100.0 CHECK (battery_level BETWEEN 0 AND 100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (campus_id) REFERENCES campuses(id) ON DELETE SET NULL
