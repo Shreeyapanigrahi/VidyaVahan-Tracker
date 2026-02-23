@@ -1,0 +1,120 @@
+{% extends "layout.html" %}
+
+{% block title %}Vehicle Route Replay{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+        border-radius: 12px;
+    }
+
+    .replay-control {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h2"><i class="fas fa-history me-2 text-primary"></i>Route Replay - {{ vehicle.name }}
+            </h1>
+            <a href="{{ url_for('vehicle.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="replay-control d-flex align-items-center justify-content-between flex-wrap g-3">
+            <div>
+                <span class="badge bg-primary me-2"><i class="fas fa-car me-1"></i> {{ vehicle.license_plate }}</span>
+                <span id="point-info" class="text-muted">Ready to replay...</span>
+            </div>
+            <div>
+                <button id="playBtn" onclick="startReplay()" class="btn btn-success">
+                    <i class="fas fa-play me-1"></i> Play Replay
+                </button>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var coordinates = {{ coordinates | tojson | safe }};
+    var map;
+    var marker;
+    var currentIndex = 0;
+    var replayInterval = null;
+
+    if (coordinates.length > 0) {
+        map = L.map('map').setView(coordinates[0], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var polyline = L.polyline(coordinates, { color: 'blue', weight: 4, opacity: 0.6 }).addTo(map);
+        map.fitBounds(polyline.getBounds());
+
+        marker = L.marker(coordinates[0], {
+            icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#0d6efd; width:20px; height:20px; border:3px solid white; border-radius:50%; box-shadow:0 0 10px rgba(0,0,0,0.5);'></div>",
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            })
+        }).addTo(map);
+
+        function startReplay() {
+            const playBtn = document.getElementById('playBtn');
+            const info = document.getElementById('point-info');
+
+            if (replayInterval) {
+                clearInterval(replayInterval);
+            }
+
+            currentIndex = 0;
+            playBtn.disabled = true;
+            playBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Playing...';
+
+            replayInterval = setInterval(function () {
+                if (currentIndex < coordinates.length) {
+                    const pos = coordinates[currentIndex];
+                    marker.setLatLng(pos);
+                    map.panTo(pos);
+                    info.innerHTML = `Step ${currentIndex + 1} of ${coordinates.length} (Lat: ${pos[0].toFixed(5)}, Lng: ${pos[1].toFixed(5)})`;
+                    currentIndex++;
+                } else {
+                    clearInterval(replayInterval);
+                    playBtn.disabled = false;
+                    playBtn.innerHTML = '<i class="fas fa-redo me-1"></i> Restart Replay';
+                    info.innerHTML = 'Replay finished.';
+                }
+            }, 500); // 500ms between points for better flow
+        }
+    } else {
+        document.getElementById("map").innerHTML =
+            "<div class='p-5 text-center'><h3><i class='fas fa-exclamation-triangle me-2 text-warning'></i>No GPS points recorded for this trip.</h3></div>";
+    }
+</script>
+{% endblock %}

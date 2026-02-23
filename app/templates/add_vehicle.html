@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+{% block title %}Add Vehicle{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('vehicle.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Add Vehicle</li>
+            </ol>
+        </nav>
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0">Vehicle Registration</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {% if form.name.errors %}
+                        {{ form.name(class="form-control is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.name.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        {{ form.name(class="form-control", placeholder="e.g., My Tesla") }}
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.license_plate.label(class="form-label") }}
+                        {% if form.license_plate.errors %}
+                        {{ form.license_plate(class="form-control is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.license_plate.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        {{ form.license_plate(class="form-control", placeholder="ABC-1234") }}
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.model.label(class="form-label") }}
+                            {% if form.model.errors %}
+                            {{ form.model(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.model.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.model(class="form-control", placeholder="Model 3") }}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.capacity.label(class="form-label") }}
+                            {% if form.capacity.errors %}
+                            {{ form.capacity(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.capacity.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.capacity(class="form-control", step="0.1") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-3">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('vehicle.dashboard') }}" class="btn btn-light">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h3 class="mb-0 fw-bold">Request Inter-Campus Trip</h3>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted text-center mb-4">Select your source and destination campuses. We will assign
+                        the nearest available vehicle to you.</p>
+
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-4">
+                            {{ form.source_campus.label(class="form-label fw-bold") }}
+                            {% if form.source_campus.errors %}
+                            {{ form.source_campus(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.source_campus.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.source_campus(class="form-select") }}
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4 text-center">
+                            <i class="bi bi-arrow-down fs-3 text-primary"></i>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.destination_campus.label(class="form-label fw-bold") }}
+                            {% if form.destination_campus.errors %}
+                            {{ form.destination_campus(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.destination_campus.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.destination_campus(class="form-select") }}
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 mt-5">
+                            {{ form.submit(class="btn btn-primary btn-lg fw-bold") }}
+                            <a href="{{ url_for('vehicle.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center py-3">
+                    <small class="text-muted">Available vehicles at the source campus will be prioritized.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

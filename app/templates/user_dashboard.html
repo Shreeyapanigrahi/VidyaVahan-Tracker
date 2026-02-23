@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+{% block title %}My Profile & Stats{% endblock %}
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold">Welcome back, {{ current_user.username }}!</h2>
+        <p class="text-muted">Here's an overview of your EV performance and driving habits.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <span class="badge bg-primary fs-6 py-2 px-3">
+            <i class="fas fa-user-circle me-1"></i> {{ current_user.role | capitalize }} Account
+        </span>
+    </div>
+</div>
+
+<!-- Stats Overview Boxes -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 bg-primary text-white">
+            <div class="card-body">
+                <h6 class="text-uppercase small opacity-75">Lifetime Distance</h6>
+                <h3 class="fw-bold mb-0">{{ stats.total_distance }} <small class="fs-6">km</small></h3>
+                <i class="fas fa-road fa-2x mt-3 opacity-25 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 bg-success text-white">
+            <div class="card-body">
+                <h6 class="text-uppercase small opacity-75">Average Score</h6>
+                <h3 class="fw-bold mb-0">{{ stats.avg_score }} <small class="fs-6">/ 100</small></h3>
+                <i class="fas fa-star fa-2x mt-3 opacity-25 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 bg-info text-white">
+            <div class="card-body">
+                <h6 class="text-uppercase small opacity-75">Total Trips</h6>
+                <h3 class="fw-bold mb-0">{{ stats.total_trips }}</h3>
+                <i class="fas fa-route fa-2x mt-3 opacity-25 float-end"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 bg-dark text-white">
+            <div class="card-body">
+                <h6 class="text-uppercase small opacity-75">Active Vehicles</h6>
+                <h3 class="fw-bold mb-0">{{ stats.active_vehicles }}</h3>
+                <i class="fas fa-car fa-2x mt-3 opacity-25 float-end"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if active_trip %}
+<div class="card border-primary mb-5 shadow-sm">
+    <div class="card-header bg-primary text-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-spinner fa-spin me-2"></i>Current Active Trip</h5>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="d-flex align-items-center">
+                    <div class="bg-light p-3 rounded-circle me-3">
+                        <i class="fas fa-car-side fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-0 small">Assigned Vehicle</h6>
+                        <p class="fw-bold mb-0 fs-5">{{ active_trip.vehicle.name if active_trip.vehicle else 'Unknown
+                            Vehicle' }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5 mb-3 mb-md-0">
+                <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+                    <div class="text-center px-2">
+                        <span class="d-block small text-muted">From</span>
+                        <span class="fw-semibold">{{ active_trip.source_campus.name if active_trip.source_campus else
+                            'Starting point' }}</span>
+                    </div>
+                    <i class="fas fa-arrow-right text-primary mx-3"></i>
+                    <div class="text-center px-2">
+                        <span class="d-block small text-muted">To</span>
+                        <span class="fw-semibold">{{ active_trip.destination_campus.name if
+                            active_trip.destination_campus else 'Destination' }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 text-center text-md-end">
+                <a href="{{ url_for('tracking.live_track', vehicle_id=active_trip.vehicle_id) }}"
+                    class="btn btn-primary px-4">
+                    <i class="fas fa-map-marker-alt me-2"></i> Track Live
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">Recent Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vehicle</th>
+                                <th>Date</th>
+                                <th>Distance</th>
+                                <th>Score</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trip in recent_activity %}
+                            <tr>
+                                <td><span class="fw-semibold text-primary">{{ trip.vehicle.name if trip.vehicle else
+                                        'Deleted Vehicle' }}</span></td>
+                                <td>{{ trip.end_time.strftime('%b %d') if trip.end_time else 'In progress' }}</td>
+                                <td>{{ trip.total_distance_km }} km</td>
+                                <td>
+                                    <div class="progress" style="height: 6px; width: 60px;">
+                                        {% set score = trip.driving_score or 0 %}
+                                        <div class="progress-bar bg-{{ 
+                                                    'success' if score > 80 
+                                                    else ('warning' if score > 50 
+                                                    else 'danger') 
+                                                }}">
+
+                                            style="width: {{ trip.driving_score }}%"></div>
+                                    </div>
+                                    <small class="text-muted">{{ trip.driving_score }}</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{ trip.driver_rating }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">No recent trips recorded.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white text-center py-3">
+                <a href="{{ url_for('vehicle.dashboard') }}" class="btn btn-sm btn-outline-primary">View All
+                    Vehicles</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">Account Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="small text-muted mb-1 d-block">Email Address</label>
+                    <div class="fw-semibold">{{ current_user.email }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="small text-muted mb-1 d-block">Member Since</label>
+                    <div class="fw-semibold">{{ current_user.created_at.strftime('%B %Y') }}</div>
+                </div>
+                <hr>
+                <div class="d-grid mt-3">
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+                        <i class="fas fa-sign-out-alt me-1"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "layout.html" %}
+{% block title %}Live Tracking - {{ target_vehicle.name }}{% endblock %}
+
+{% block head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .status-panel {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        position: relative;
+    }
+
+    .battery-low {
+        color: #dc3545;
+        font-weight: bold;
+        animation: blinker 1s linear infinite;
+    }
+
+    @keyframes blinker {
+        50% {
+            opacity: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-9">
+        <div id="map" class="map-container"></div>
+    </div>
+    <div class="col-md-3">
+        <div class="status-panel mt-4 mt-md-0">
+            <h4 class="mb-3">{{ target_vehicle.name }}</h4>
+            <div class="mb-3">
+                <small class="text-muted d-block">LICENSE PLATE</small>
+                <strong>{{ target_vehicle.license_plate }}</strong>
+            </div>
+            <hr>
+            <div class="mb-3">
+                <small class="text-muted d-block">BATTERY STATUS</small>
+                <div id="battery-status-container">
+                    <span id="battery-percent" class="battery-display">100.0%</span>
+                    <div class="progress mt-1" style="height: 10px;">
+                        <div id="battery-bar" class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <small class="text-muted d-block">CURRENT SPEED</small>
+                <span id="current-speed">0.0 km/h</span>
+            </div>
+            <div class="mb-4">
+                <small class="text-muted d-block">DISTANCE TRAVELED</small>
+                <span id="trip-distance">0.00 km</span>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button id="stop-btn" class="btn btn-danger btn-lg">Stop Trip</button>
+                <a href="{{ url_for('vehicle.dashboard') }}" class="btn btn-light">Back to Dashboard</a>
+            </div>
+
+            <div id="alert-box" class="mt-3 d-none">
+                <div class="alert alert-danger mb-0 py-2">
+                    <i class="fas fa-exclamation-triangle me-1"></i> Low Battery!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    (function () {
+        let map, marker, path;
+        let isTracking = true;
+        let currentLat = parseFloat("{{ target_vehicle.current_lat or 19.0760 }}");
+        let currentLng = parseFloat("{{ target_vehicle.current_lng or 72.8777 }}");
+
+        let vehicleId = Number("{{ target_vehicle.id }}");
+        let tripId = Number("{{ trip.id }}");
+        let tripDistance = 0;
+        let batteryPercent = parseFloat("{{ target_vehicle.battery.current_percentage if target_vehicle.battery else 100 }}");
+
+        let updateInterval;
+
+        // Initialize Map
+        function initMap() {
+            map = L.map('map').setView([currentLat, currentLng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([currentLat, currentLng]).addTo(map)
+                .bindPopup("{{ target_vehicle.name }}").openPopup();
+
+            path = L.polyline([], { color: '#0d6efd', weight: 5 }).addTo(map);
+
+            // Auto-start tracking/simulation
+            updateInterval = setInterval(simulateMovement, 5000);
+        }
+
+        async function stopTrip() {
+            if (!confirm('Are you sure you want to end this trip?')) return;
+
+            clearInterval(updateInterval);
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch('/api/trip/end', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ vehicle_id: vehicleId, lat: currentLat, lng: currentLng })
+                });
+                if (res.ok) {
+                    isTracking = false;
+                    window.location.href = `/trips/${vehicleId}`;
+                } else {
+                    alert('Failed to stop trip. Please try again.');
+                    // Restart interval if failed
+                    updateInterval = setInterval(simulateMovement, 5000);
+                }
+            } catch (err) {
+                console.error('Stop trip error:', err);
+                alert('Network error. Please check your connection.');
+                updateInterval = setInterval(simulateMovement, 5000);
+            }
+        }
+
+        function simulateMovement() {
+            // Simple random movement logic for software demonstration
+            currentLat += (Math.random() - 0.5) * 0.005;
+            currentLng += (Math.random() - 0.5) * 0.005;
+
+            let newPos = [currentLat, currentLng];
+            marker.setLatLng(newPos);
+            path.addLatLng(newPos);
+            map.panTo(newPos);
+
+            updateServer(currentLat, currentLng);
+        }
+
+        async function updateServer(lat, lng) {
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch('/api/update_location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ vehicle_id: vehicleId, lat: lat, lng: lng })
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('battery-percent').innerText = stats.battery.toFixed(1) + '%';
+                    document.getElementById('battery-bar').style.width = stats.battery + '%';
+                    document.getElementById('current-speed').innerText = (Math.random() * 40 + 20).toFixed(1) + ' km/h';
+
+                    if (stats.low_battery_alert) {
+                        document.getElementById('alert-box').classList.remove('d-none');
+                        document.getElementById('battery-percent').classList.add('battery-low');
+                        document.getElementById('battery-bar').classList.replace('bg-success', 'bg-danger');
+                    }
+                }
+            } catch (err) {
+                console.error('Location update error:', err);
+            }
+        }
+
+        document.getElementById('stop-btn').onclick = stopTrip;
+
+        window.onload = initMap;
+    })();
+</script>
+{% endblock %}

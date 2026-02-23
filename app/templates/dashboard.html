@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt me-2 text-primary"></i>My Vehicles</h2>
+    <div>
+        <a href="{{ url_for('trip.request_trip') }}" class="btn btn-primary me-2">
+            <i class="fas fa-plus me-1"></i> Request Trip
+        </a>
+        <a href="{{ url_for('vehicle.add_vehicle') }}" class="btn btn-outline-primary shadow-sm">
+            <i class="fas fa-plus me-1"></i> Add Vehicle
+        </a>
+    </div>
+</div>
+
+{% if vehicles %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for v in vehicles %}
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">{{ v.name }}</h5>
+                <h6 class="card-subtitle mb-3 text-muted">{{ v.license_plate }}</h6>
+                <div class="mb-3">
+                    <p class="mb-1 text-muted small uppercase">Battery Status</p>
+                    <div class="progress" style="height: 25px;">
+                        {% set battery_pct = v.battery.current_percentage | float if v.battery else 0 %}
+                        {% set battery_color = 'bg-success' if battery_pct > 50 else ('bg-warning' if battery_pct > 20
+                        else 'bg-danger') %}
+                        <div class="progress-bar {{ battery_color }}" role="progressbar"
+                            style="width: {{ battery_pct }}%;" aria-valuenow="{{ battery_pct }}" aria-valuemin="0"
+                            aria-valuemax="100">
+                            {{ battery_pct | round(1) }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex flex-column gap-2 mt-4">
+                    <a href="{{ url_for('tracking.live_track', vehicle_id=v.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-map-marker-alt me-1"></i> Track Live
+                    </a>
+                    <a href="{{ url_for('tracking.trip_history', vehicle_id=v.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-history me-1"></i> Trip History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-car-side fa-4x text-muted mb-3"></i>
+    <h4>No vehicles found</h4>
+    <p class="text-muted">Register your first electric vehicle to start tracking.</p>
+    <a href="{{ url_for('vehicle.add_vehicle') }}" class="btn btn-primary mt-2">Add Vehicle</a>
+</div>
+{% endif %}
+{% endblock %}

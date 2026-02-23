@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}Server Error - 500{% endblock %}
+
+{% block content %}
+<div class="row min-vh-75 align-items-center">
+    <div class="col-12 text-center py-5">
+        <div class="display-1 fw-bold text-warning mb-3">500</div>
+        <h2 class="mb-4">System Overload</h2>
+        <p class="lead text-muted mb-5">
+            Our servers encountered an unexpected glitch while processing your request. We've logged the incident and
+            our engineers will look into it.
+        </p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            <a href="{{ url_for('vehicle.dashboard') }}" class="btn btn-primary btn-lg px-4 gap-3">
+                <i class="fas fa-sync me-2"></i>Try Dashboard Again
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

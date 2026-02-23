@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+{% block title %}Trip History - {{ vehicle.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('vehicle.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Trip History</li>
+            </ol>
+        </nav>
+        <h2><i class="fas fa-history me-2 text-secondary"></i>History: {{ vehicle.name }}</h2>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Distance</th>
+                        <th>Battery Used</th>
+                        <th>Start Point</th>
+                        <th>End Point</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trip in trips %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ trip.start_time.strftime('%b %d, %Y') }}</div>
+                            <small class="text-muted">{{ trip.start_time.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>{{ trip.total_distance_km | round(2) }} km</td>
+                        <td>
+                            <span class="text-danger">-{{ trip.battery_consumed_percent | round(1) }}%</span>
+                        </td>
+                        <td>
+                            <small class="text-truncate d-block" style="max-width: 150px;">
+                                {{ trip.start_lat | round(4) }}, {{ trip.start_longitude | round(4) }}
+                            </small>
+                        </td>
+                        <td>
+                            {% if trip.end_lat %}
+                            <small class="text-truncate d-block" style="max-width: 150px;">
+                                {{ trip.end_lat | round(4) }}, {{ trip.end_longitude | round(4) }}
+                            </small>
+                            {% else %}
+                            <span class="text-muted">--</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if trip.status == 'completed' %}
+                            <span class="badge bg-success">Completed</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Active</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not trips %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <p class="text-muted mb-0">No recorded trips for this vehicle.</p>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
